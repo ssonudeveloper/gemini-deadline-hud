@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zero to v1.0 | Countdown Lock Screen Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Obsidian Minimal Theme (Linear / Apple Pro Aesthetic) */
+    :root {
+      --app-bg: #09090B;
+      --surface: #121215;
+      --surface-subtle: #18181C;
+      --text-primary: #FAFAFA;
+      --text-secondary: #8E8E93;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #10B981;
+      --accent-launch: #3B82F6;
+      --phone-bg: #0B0B0E;
+      --phone-card: rgba(255, 255, 255, 0.045);
+      --phone-text: #FAFAFA;
+      --phone-muted: #8E8E93;
+      --phone-border: rgba(255, 255, 255, 0.1);
+      --font-display: 'Inter', -apple-system, sans-serif;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--app-bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navigation Bar */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 2rem;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+
+    .brand-badge {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 0.72rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    .brand h1 { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; }
+
+    .action-bar { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.95rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: var(--surface-subtle);
+    }
+
+    .btn-primary {
+      background: #FAFAFA;
+      color: #09090B;
+      border: none;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background: #E4E4E7;
+    }
+
+    .btn-emerald {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #34D399;
+    }
+
+    /* Workspace Grid */
+    .workspace {
+      max-width: 1460px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    @media (max-width: 1080px) {
+      .workspace { grid-template-columns: 1fr; }
+    }
+
+    /* Left Preview Stage */
+    .preview-stage {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 5.5rem;
+    }
+
+    .stage-controls { width: 100%; display: flex; justify-content: center; }
+
+    .toggle-pill {
+      display: inline-flex;
+      background: var(--surface-subtle);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      width: 100%;
+    }
+
+    .toggle-pill button {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.4rem 0.5rem;
+      font-size: 0.76rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .toggle-pill button.active {
+      background: var(--surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .canvas-wrapper {
+      width: 100%;
+      max-width: 340px;
+      aspect-ratio: 9 / 19.5;
+      border-radius: 36px;
+      padding: 10px;
+      background: #18181B;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    #lockscreenCanvas { width: 100%; height: 100%; border-radius: 28px; display: block; }
+
+    .stage-caption { font-size: 0.78rem; color: var(--text-secondary); text-align: center; }
+
+    /* Right Details Column */
+    .details-column { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title { font-size: 0.98rem; font-weight: 600; letter-spacing: -0.01em; }
+
+    .step-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    /* Studio Controls */
+    .studio-controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .control-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .control-group label { font-size: 0.73rem; font-weight: 500; color: var(--text-secondary); letter-spacing: 0.02em; }
+
+    .input-field, .select-field {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-family: inherit;
+    }
+
+    .input-field:focus, .select-field:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .preset-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.1rem; }
+    .preset-chip {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .preset-chip:hover { border-color: rgba(255, 255, 255, 0.2); color: var(--text-primary); }
+
+    .milestone-list { display: flex; flex-direction: column; gap: 0.65rem; }
+
+    .milestone-item {
+      display: grid;
+      grid-template-columns: auto 110px 1fr 1fr auto;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    @media (max-width: 760px) {
+      .milestone-item { grid-template-columns: auto 1fr; }
+    }
+
+    .milestone-item.done { border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.04); }
+    .milestone-item.active { border-color: rgba(255, 255, 255, 0.25); }
+
+    .status-btn {
+      width: 26px; height: 26px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text-primary); cursor: pointer; font-weight: 600; font-size: 0.75rem;
+    }
+
+    .milestone-item.done .status-btn { background: #10B981; border-color: #10B981; color: #09090B; }
+    .milestone-item.active .status-btn { background: var(--surface); border-color: rgba(255,255,255,0.3); color: var(--text-primary); }
+
+    .milestone-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.73rem; color: var(--text-secondary); }
+
+    .workflow-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+    .prompt-card { background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; font-size: 0.81rem; color: var(--text-secondary); }
+    .prompt-card h4 { color: var(--text-primary); font-size: 0.78rem; text-transform: uppercase; margin-bottom: 0.45rem; font-family: 'JetBrains Mono', monospace; }
+    .prompt-code {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.74rem;
+      background: var(--app-bg); padding: 0.7rem; border-radius: 8px;
+      border: 1px solid var(--border); margin-top: 0.5rem;
+      white-space: pre-wrap; color: #D4D4D8;
+    }
+
+    .cover-preview-container { width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: #0B0B0E; }
+    #coverCanvas { width: 100%; height: auto; display: block; }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-badge">STUDIO</span>
+      <h1>Zero to v1.0: Countdown Lock Screen HUD</h1>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-primary" id="downloadCoverBtn">⬇ 3:2 Handshake Cover PNG</button>
+      <button class="btn" id="downloadPhoneBtn">📱 Phone Wallpaper</button>
+      <button class="btn" id="downloadDesktopBtn">💻 Desktop Wallpaper</button>
+      <button class="btn btn-emerald" id="exportIcsBtn">📅 Export Reminders (.ics)</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Left Preview Stage -->
+    <section class="preview-stage" aria-label="Interactive Lock Screen Preview">
+      <div class="stage-controls">
+        <div class="toggle-pill" role="group">
+          <button type="button" class="active" id="modeOsBtn">Live OS Clock</button>
+          <button type="button" id="modeCleanBtn">Clean Wallpaper</button>
+          <button type="button" id="modeWireBtn">Wireframe</button>
+        </div>
+      </div>
+
+      <div class="canvas-wrapper">
+        <canvas id="lockscreenCanvas" width="1080" height="2340"></canvas>
+      </div>
+
+      <p class="stage-caption">
+        Native <strong>1080×2340 (9:19.5)</strong> & <strong>2560×1600 (16:10)</strong>. Top 28% reserved as an OS clock safe zone.
+      </p>
+    </section>
+
+    <!-- Right Details Column -->
+    <div class="details-column">
+
+      <!-- Panel 1: Studio Controls -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">I. Backward-Planning & Style Studio</div>
+          <span class="step-tag">STEPS I & II</span>
+        </div>
+
+        <div class="preset-row">
+          <span style="font-size:0.75rem;color:var(--text-secondary);align-self:center;">Quick Presets:</span>
+          <button class="preset-chip" data-preset="devtool">🚀 AI DevTool v1.0 Launch</button>
+          <button class="preset-chip" data-preset="finals">🎓 Final Exam Crunch</button>
+          <button class="preset-chip" data-preset="career">💼 SWE Portfolio Sprint</button>
+        </div>
+
+        <div class="studio-controls-grid">
+          <div class="control-group">
+            <label for="goalTitleInput">Deadline Goal Title</label>
+            <input id="goalTitleInput" class="input-field" type="text" value="AI DEVTOOL v1.0 LAUNCH" maxlength="28" />
+          </div>
+          <div class="control-group">
+            <label for="targetDateInput">Target Deadline Date</label>
+            <input id="targetDateInput" class="input-field" type="date" value="2026-11-23" />
+          </div>
+          <div class="control-group">
+            <label for="themeSelect">Visual Theme Style</label>
+            <select id="themeSelect" class="select-field">
+              <option value="obsidian">Obsidian Minimal (Linear / Apple)</option>
+              <option value="nordic">Nordic Editorial (Warm Paper)</option>
+              <option value="swiss">Swiss Industrial (Monochrome)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label for="refImageInput">Reference Image (Extract Palette)</label>
+            <input id="refImageInput" class="input-field" type="file" accept="image/*" style="padding:0.35rem;" />
+          </div>
+        </div>
+
+        <div class="milestone-list" id="milestoneList"></div>
+      </section>
+
+      <!-- Panel 2: Cover Preview -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">II. Handshake 3:2 Cover Image Preview (1800 × 1200 px)</div>
+          <span class="step-tag">PREVIEW IMAGE</span>
+        </div>
+        <div class="cover-preview-container">
+          <canvas id="coverCanvas" width="1800" height="1200"></canvas>
+        </div>
+      </section>
+
+      <!-- Panel 3: Gemini Workflow -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">III. How Google Gemini Powered This Build</div>
+          <span class="step-tag">RUBRIC PROOF</span>
+        </div>
+        <div class="workflow-grid">
+          <div class="prompt-card">
+            <h4>1. Backward Milestones</h4>
+            <p>Decomposed our Nov 23 release into 5 ordered checkpoints working backward from launch day:</p>
+            <div class="prompt-code">"Target deadline: Public v1.0 AI DevTool launch on Nov 23. Work backward from Nov 23 to Nov 9 and break the sprint into 5 sequential milestones with 4-word titles readable at a glance."</div>
+          </div>
+          <div class="prompt-card">
+            <h4>2. Multimodal HUD Design</h4>
+            <p>Combined a structural 9:19.5 HUD wireframe with matte obsidian styling:</p>
+            <div class="prompt-code">"Using the attached HUD layout wireframe, render a matte obsidian (#09090B) countdown lock screen with subtle borders. Keep the top 28% uncluttered for the native OS clock."</div>
+          </div>
+          <div class="prompt-card">
+            <h4>3. Daily Reminders</h4>
+            <p>Paired each backward milestone with a 9:00 AM daily accountability trigger (.ics exportable):</p>
+            <div class="prompt-code">"Schedule 9:00 AM reminders for Nov 9, Nov 13, Nov 17, Nov 20, and Nov 23 matching each milestone node."</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    const THEMES = {
+      obsidian: {
+        bgTop: "#0B0B0E", bgMid: "#121215", bgBot: "#08080A",
+        primary: "#FAFAFA", done: "#10B981", launch: "#3B82F6",
+        cardDone: "rgba(16, 185, 129, 0.08)", cardActive: "rgba(255, 255, 255, 0.07)"
+      },
+      nordic: {
+        bgTop: "#F4F2ED", bgMid: "#EFECE6", bgBot: "#E4E2DC",
+        primary: "#141413", done: "#EA580C", launch: "#2563EB",
+        cardDone: "rgba(234, 88, 12, 0.08)", cardActive: "rgba(20, 20, 19, 0.06)"
+      },
+      swiss: {
+        bgTop: "#111111", bgMid: "#1A1A1A", bgBot: "#0F0F0F",
+        primary: "#F4F3EF", done: "#FF3B00", launch: "#888782",
+        cardDone: "rgba(255, 59, 0, 0.1)", cardActive: "rgba(255, 255, 255, 0.09)"
+      }
+    };
+
+    const PRESETS = {
+      devtool: {
+        title: "AI DEVTOOL v1.0 LAUNCH",
+        date: "2026-11-23",
+        items: [
+          { title: "Lock Spec & UI Wireframes", sub: "Architecture sign-off & HUD layout", icon: "◈", status: "done" },
+          { title: "Core API & Auth Engine", sub: "REST endpoints & OAuth2 session flow", icon: "</>", status: "active" },
+          { title: "AI Agent & Prompt QA", sub: "Multimodal inference & latency tuning", icon: "✦", status: "todo" },
+          { title: "E2E Tests & Performance", sub: "Playwright suite green & 100 Lighthouse", icon: "⚡", status: "todo" },
+          { title: "Ship Public v1.0 Release", sub: "Production cutover & showcase live", icon: "🚀", status: "todo" }
+        ]
+      },
+      finals: {
+        title: "FINAL EXAM A+ CRUNCH",
+        date: "2026-11-23",
+        items: [
+          { title: "Map Syllabus & Weak Spots", sub: "Rank high-weight topics & past papers", icon: "◈", status: "done" },
+          { title: "Core Theory & Formula Deck", sub: "Condense lectures into active recall cards", icon: "📚", status: "active" },
+          { title: "Solve 3 Timed Mock Exams", sub: "Simulate closed-book exam conditions", icon: "⏱", status: "todo" },
+          { title: "Drill Error Log & Edge Cases", sub: "Patch mistakes from practice tests", icon: "⚡", status: "todo" },
+          { title: "Final Review & Exam Day", sub: "Light formula scan & full 8hr rest", icon: "🏆", status: "todo" }
+        ]
+      },
+      career: {
+        title: "SWE PORTFOLIO & INTERVIEW",
+        date: "2026-11-23",
+        items: [
+          { title: "Audit Resume & Case Studies", sub: "Quantify impact metrics & system diagrams", icon: "◈", status: "done" },
+          { title: "Deploy Flagship Live Demo", sub: "Ship interactive AI project on GitHub", icon: "</>", status: "active" },
+          { title: "40 Blind-75 DSA Patterns", sub: "Trees, graphs & dynamic programming", icon: "✦", status: "todo" },
+          { title: "System Design Mock Rounds", sub: "Caching, sharding & API latency drills", icon: "⚡", status: "todo" },
+          { title: "Submit Applications Batch", sub: "Direct referrals & showcase links live", icon: "🚀", status: "todo" }
+        ]
+      }
+    };
+
+    const state = {
+      previewMode: "os",
+      themeKey: "obsidian",
+      customTheme: null,
+      deadlineTitle: "AI DEVTOOL v1.0 LAUNCH",
+      targetDateISO: "2026-11-23",
+      offsets: [14, 10, 6, 3, 0],
+      milestones: []
+    };
+
+    function getActiveTheme() { return state.customTheme || THEMES[state.themeKey]; }
+
+    function formatShortDate(dateObj) {
+      return dateObj.toLocaleDateString("en-US", { month: "short", day: "2-digit" }).toUpperCase();
+    }
+
+    function recalculateBackwardDates() {
+      const base = new Date(state.targetDateISO + "T12:00:00");
+      state.milestones.forEach((m, idx) => {
+        const offset = state.offsets[idx] || 0;
+        const d = new Date(base);
+        d.setDate(base.getDate() - offset);
+        m.date = formatShortDate(d);
+        m.isoDate = d.toISOString().slice(0, 10).replace(/-/g, "");
+        m.delta = offset === 0 ? "LAUNCH DAY" : `T-${String(offset).padStart(2, "0")} DAYS`;
+      });
+    }
+
+    function loadPreset(key) {
+      const p = PRESETS[key];
+      state.deadlineTitle = p.title;
+      state.targetDateISO = p.date;
+      document.getElementById("goalTitleInput").value = p.title;
+      document.getElementById("targetDateInput").value = p.date;
+      state.milestones = p.items.map((item, i) => ({ id: i + 1, ...item }));
+      recalculateBackwardDates();
+      updateAll();
+    }
+
+    const lockCanvas = document.getElementById("lockscreenCanvas");
+    const lockCtx = lockCanvas.getContext("2d");
+    const coverCanvas = document.getElementById("coverCanvas");
+    const coverCtx = coverCanvas.getContext("2d");
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function renderLockScreen(ctx, options = {}) {
+      const mode = options.mode || state.previewMode;
+      const showOs = mode === "os";
+      const isWireframe = mode === "wireframe";
+      const theme = getActiveTheme();
+      const W = 1080, H = 2340;
+
+      ctx.save();
+
+      if (isWireframe) {
+        ctx.fillStyle = "#0B0B0E";
+        ctx.fillRect(0, 0, W, H);
+      } else {
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+        bgGrad.addColorStop(0, theme.bgTop);
+        bgGrad.addColorStop(0.5, theme.bgMid);
+        bgGrad.addColorStop(1, theme.bgBot);
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      // Subtle Hairline Grid
+      ctx.strokeStyle = isWireframe ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.035)";
+      ctx.lineWidth = 1.25;
+      for (let x = 0; x <= W; x += 90) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      for (let y = 0; y <= H; y += 90) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+      // Top Safe-Zone Canopy
+      const safeX = 76, safeY = 120, safeW = W - 152, safeH = 490, bLen = 42;
+      ctx.strokeStyle = isWireframe ? "#8E8E93" : "rgba(255, 255, 255, 0.25)";
+      ctx.lineWidth = 3;
+
+      [[safeX, safeY + bLen, safeX, safeY, safeX + bLen, safeY],
+       [safeX + safeW - bLen, safeY, safeX + safeW, safeY, safeX + safeW, safeY + bLen],
+       [safeX, safeY + safeH - bLen, safeX, safeY + safeH, safeX + bLen, safeY + safeH],
+       [safeX + safeW - bLen, safeY + safeH, safeX + safeW, safeY + safeH, safeX + safeW, safeY + safeH - bLen]
+      ].forEach(([x1, y1, x2, y2, x3, y3]) => {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.stroke();
+      });
+
+      ctx.font = "600 21px 'JetBrains Mono', monospace";
+      ctx.fillStyle = isWireframe ? "#8E8E93" : "rgba(255, 255, 255, 0.6)";
+      ctx.textAlign = "center";
+      ctx.fillText("SYS.HUD // OS CLOCK SAFE-ZONE CANOPY", W / 2, safeY + 38);
+
+      if (showOs) {
+        ctx.fillStyle = "rgba(250, 250, 250, 0.85)";
+        ctx.font = "600 26px 'Inter', sans-serif";
+        ctx.textAlign = "left"; ctx.fillText("5G  100%", 95, 76);
+        ctx.textAlign = "right"; ctx.fillText("🔒", W - 95, 76);
+
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#FAFAFA";
+        ctx.font = "600 32px 'Inter', sans-serif";
+        ctx.fillText("Mon, Nov 9", W / 2, safeY + 115);
+
+        ctx.font = "600 180px 'Inter', sans-serif";
+        ctx.fillText("09:41", W / 2, safeY + 290);
+
+        const activeM = state.milestones.find(m => m.status === "active") || state.milestones[0];
+        roundRect(ctx, 130, safeY + 345, W - 260, 112, 28);
+        ctx.fillStyle = "rgba(18, 18, 21, 0.94)";
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+        ctx.stroke();
+
+        ctx.textAlign = "left";
+        ctx.font = "600 24px 'Inter', sans-serif";
+        ctx.fillStyle = "#10B981";
+        ctx.fillText("• Daily Sprint Reminder • 9:00 AM", 168, safeY + 392);
+        ctx.font = "500 24px 'Inter', sans-serif";
+        ctx.fillStyle = "#A1A1AA";
+        ctx.fillText(`Next Node (${activeM.date}): ${activeM.title}`, 168, safeY + 432);
+      } else if (isWireframe) {
+        ctx.strokeStyle = "rgba(142, 142, 147, 0.4)";
+        ctx.setLineDash([12, 10]);
+        roundRect(ctx, safeX + 30, safeY + 60, safeW - 60, safeH - 90, 24);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#8E8E93";
+        ctx.font = "700 32px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("[ RESERVED OS CLOCK & WIDGET ZONE ]", W / 2, safeY + 260);
+      }
+
+      // Hero Banner
+      const heroX = 76, heroY = 655, heroW = W - 152, heroH = 190;
+      roundRect(ctx, heroX, heroY, heroW, heroH, 24);
+      ctx.fillStyle = isWireframe ? "#18181B" : "rgba(18, 18, 21, 0.9)";
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = isWireframe ? "#8E8E93" : "rgba(255, 255, 255, 0.12)";
+      ctx.stroke();
+
+      ctx.font = "600 21px 'JetBrains Mono', monospace";
+      ctx.fillStyle = isWireframe ? "#FAFAFA" : "#A1A1AA";
+      ctx.textAlign = "left";
+      ctx.fillText("14-DAY SPRINT ROADMAP", heroX + 36, heroY + 54);
+
+      const finalM = state.milestones[state.milestones.length - 1];
+      ctx.textAlign = "right";
+      ctx.fillStyle = isWireframe ? "#FAFAFA" : theme.done;
+      ctx.fillText(`TARGET: ${finalM ? finalM.date : "NOV 23"}, 2026`, heroX + heroW - 36, heroY + 54);
+
+      ctx.textAlign = "left";
+      ctx.font = "700 42px 'Inter', sans-serif";
+      ctx.fillStyle = "#FAFAFA";
+      ctx.fillText(state.deadlineTitle.toUpperCase(), heroX + 36, heroY + 120);
+
+      const doneCount = state.milestones.filter(m => m.status === "done").length;
+      const activeCount = state.milestones.filter(m => m.status === "active").length;
+      const progressRatio = Math.min(1, (doneCount + activeCount * 0.5) / state.milestones.length);
+
+      roundRect(ctx, heroX + 36, heroY + 148, heroW - 72, 12, 6);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.fill();
+
+      roundRect(ctx, heroX + 36, heroY + 148, Math.max(24, (heroW - 72) * progressRatio), 12, 6);
+      ctx.fillStyle = isWireframe ? "#FAFAFA" : theme.done;
+      ctx.fill();
+
+      // Milestones
+      const startY = 890, cardGap = 228, cardX = 176, cardW = W - 252, cardH = 192, nodeCenterX = 114;
+      ctx.beginPath();
+      ctx.moveTo(nodeCenterX, startY + 50);
+      ctx.lineTo(nodeCenterX, startY + (state.milestones.length - 1) * cardGap + 95);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = isWireframe ? "#52525B" : "rgba(255, 255, 255, 0.12)";
+      ctx.stroke();
+
+      state.milestones.forEach((m, idx) => {
+        const y = startY + idx * cardGap;
+        const cy = y + cardH / 2;
+        const isDone = m.status === "done";
+        const isActive = m.status === "active";
+        const isLaunch = idx === state.milestones.length - 1;
+
+        let accent = isDone ? theme.done : isActive ? "#FAFAFA" : "rgba(255, 255, 255, 0.3)";
+        let bgFill = isDone ? theme.cardDone : isActive ? theme.cardActive : "rgba(24, 24, 27, 0.85)";
+        if (isWireframe) { accent = "#8E8E93"; bgFill = "#18181B"; }
+
+        ctx.beginPath();
+        ctx.arc(nodeCenterX, cy, 30, 0, Math.PI * 2);
+        ctx.fillStyle = isDone && !isWireframe ? theme.done : "#0B0B0E";
+        ctx.fill();
+        ctx.lineWidth = isActive ? 3 : 2;
+        ctx.strokeStyle = accent;
+        ctx.stroke();
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "700 24px 'JetBrains Mono', monospace";
+        ctx.fillStyle = isDone && !isWireframe ? "#0B0B0E" : "#FAFAFA";
+        ctx.fillText(isDone ? "✓" : String(idx + 1), nodeCenterX, cy + 2);
+        ctx.textBaseline = "alphabetic";
+
+        roundRect(ctx, cardX, y, cardW, cardH, 22);
+        ctx.fillStyle = bgFill;
+        ctx.fill();
+        ctx.lineWidth = isActive ? 2 : 1;
+        ctx.strokeStyle = isActive ? "rgba(255,255,255,0.25)" : "rgba(255, 255, 255, 0.08)";
+        ctx.stroke();
+
+        ctx.textAlign = "left";
+        ctx.font = "600 22px 'JetBrains Mono', monospace";
+        ctx.fillStyle = isDone ? theme.done : isActive ? "#FAFAFA" : "#A1A1AA";
+        ctx.fillText(`${m.date}  •  ${m.delta}`, cardX + 34, y + 52);
+
+        const statusLabel = isDone ? "COMPLETED" : isActive ? "IN PROGRESS" : isLaunch ? "FINAL GOAL" : "SCHEDULED";
+        ctx.textAlign = "right";
+        ctx.font = "600 18px 'JetBrains Mono', monospace";
+        ctx.fillStyle = accent;
+        ctx.fillText(statusLabel, cardX + cardW - 34, y + 50);
+
+        ctx.textAlign = "left";
+        ctx.font = "700 36px 'Inter', sans-serif";
+        ctx.fillStyle = "#FAFAFA";
+        ctx.fillText(m.title, cardX + 34, y + 112);
+
+        ctx.font = "400 24px 'Inter', sans-serif";
+        ctx.fillStyle = "#8E8E93";
+        ctx.fillText(m.sub, cardX + 34, y + 154);
+
+        roundRect(ctx, cardX + cardW - 102, y + 76, 68, 68, 16);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+        ctx.fill();
+        ctx.textAlign = "center";
+        ctx.font = "600 28px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#D4D4D8";
+        ctx.fillText(m.icon, cardX + cardW - 68, y + 121);
+      });
+
+      ctx.textAlign = "center";
+      ctx.font = "500 21px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "rgba(142, 142, 147, 0.7)";
+      ctx.fillText("OBSIDIAN MINIMAL DESIGN SYSTEM • BACKWARD MILESTONE ENGINE", W / 2, 2145);
+
+      ctx.restore();
+    }
+
+    function renderCoverShowcase() {
+      const W = 1800, H = 1200;
+      const theme = getActiveTheme();
+      coverCtx.save();
+
+      const bg = coverCtx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, theme.bgTop);
+      bg.addColorStop(0.5, theme.bgMid);
+      bg.addColorStop(1, theme.bgBot);
+      coverCtx.fillStyle = bg;
+      coverCtx.fillRect(0, 0, W, H);
+
+      coverCtx.textAlign = "left";
+      roundRect(coverCtx, 80, 95, 410, 44, 10);
+      coverCtx.fillStyle = "rgba(255, 255, 255, 0.05)";
+      coverCtx.fill();
+      coverCtx.lineWidth = 1;
+      coverCtx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      coverCtx.stroke();
+
+      coverCtx.font = "600 21px 'JetBrains Mono', monospace";
+      coverCtx.fillStyle = "#FAFAFA";
+      coverCtx.fillText("✦ COUNTDOWN LOCK SCREEN STUDIO", 104, 124);
+
+      coverCtx.font = "700 62px 'Inter', sans-serif";
+      coverCtx.fillStyle = "#FAFAFA";
+      coverCtx.fillText("Zero to v1.0:", 80, 230);
+      coverCtx.fillStyle = "#8E8E93";
+      coverCtx.fillText("Obsidian Studio HUD", 80, 305);
+
+      coverCtx.font = "400 26px 'Inter', sans-serif";
+      coverCtx.fillStyle = "#8E8E93";
+      coverCtx.fillText("Backward-planned lock screen engineered with", 80, 370);
+      coverCtx.fillText("OS clock safe zones & daily sprint reminders.", 80, 408);
+
+      const highlights = [
+        ["01 // BACKWARD PLAN", "5 sequential milestones leading up to Nov 23"],
+        ["02 // MINIMAL HUD", "Matte zinc specular UI with hairline borders"],
+        ["03 // CLOCK SAFE-ZONE", "Top 28% canopy framed for mobile OS clock"],
+        ["04 // DAILY REMINDERS", "Synced 9:00 AM accountability check-in triggers"]
+      ];
+
+      highlights.forEach(([title, desc], i) => {
+        const py = 465 + i * 145;
+        roundRect(coverCtx, 80, py, 690, 122, 16);
+        coverCtx.fillStyle = "rgba(18, 18, 21, 0.9)";
+        coverCtx.fill();
+        coverCtx.lineWidth = 1;
+        coverCtx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        coverCtx.stroke();
+
+        coverCtx.font = "600 21px 'JetBrains Mono', monospace";
+        coverCtx.fillStyle = i === 0 ? theme.done : "#FAFAFA";
+        coverCtx.fillText(title, 112, py + 46);
+
+        coverCtx.font = "400 24px 'Inter', sans-serif";
+        coverCtx.fillStyle = "#8E8E93";
+        coverCtx.fillText(desc, 112, py + 88);
+      });
+
+      const offscreen = document.createElement("canvas");
+      offscreen.width = 1080; offscreen.height = 2340;
+      const offCtx = offscreen.getContext("2d");
+
+      renderLockScreen(offCtx, { mode: "os" });
+      drawPhoneMockOnCover(coverCtx, offscreen, 855, 80, 430, 932, "LIVE LOCK SCREEN + OS CLOCK", "rgba(255,255,255,0.2)");
+
+      renderLockScreen(offCtx, { mode: "clean" });
+      drawPhoneMockOnCover(coverCtx, offscreen, 1320, 80, 430, 932, "CLEAN WALLPAPER (READY TO SET)", "rgba(255,255,255,0.2)");
+
+      coverCtx.restore();
+    }
+
+    function drawPhoneMockOnCover(ctx, sourceCanvas, x, y, w, h, label, borderCol) {
+      ctx.save();
+      roundRect(ctx, x - 12, y - 12, w + 24, h + 24, 44);
+      ctx.fillStyle = "#18181B";
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = borderCol;
+      ctx.stroke();
+
+      roundRect(ctx, x, y, w, h, 34);
+      ctx.clip();
+      ctx.drawImage(sourceCanvas, x, y, w, h);
+      ctx.restore();
+
+      ctx.textAlign = "center";
+      ctx.font = "600 19px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#8E8E93";
+      ctx.fillText(label, x + w / 2, y + h + 52);
+    }
+
+    function renderMilestoneControls() {
+      const container = document.getElementById("milestoneList");
+      container.innerHTML = "";
+
+      state.milestones.forEach((m, index) => {
+        const row = document.createElement("div");
+        row.className = `milestone-item ${m.status}`;
+
+        const btn = document.createElement("button");
+        btn.className = "status-btn";
+        btn.textContent = m.status === "done" ? "✓" : m.status === "active" ? "⚡" : "○";
+        btn.addEventListener("click", () => {
+          const order = ["done", "active", "todo"];
+          m.status = order[(order.indexOf(m.status) + 1) % order.length];
+          updateAll();
+        });
+
+        const tag = document.createElement("div");
+        tag.className = "milestone-tag";
+        tag.textContent = `${m.date} (${m.delta})`;
+
+        const titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.className = "input-field";
+        titleInput.value = m.title;
+        titleInput.maxLength = 30;
+        titleInput.addEventListener("input", (e) => {
+          m.title = e.target.value;
+          renderLockScreen(lockCtx);
+          renderCoverShowcase();
+        });
+
+        const subInput = document.createElement("input");
+        subInput.type = "text";
+        subInput.className = "input-field";
+        subInput.value = m.sub;
+        subInput.maxLength = 42;
+        subInput.addEventListener("input", (e) => {
+          m.sub = e.target.value;
+          renderLockScreen(lockCtx);
+          renderCoverShowcase();
+        });
+
+        const stateLabel = document.createElement("span");
+        stateLabel.style.fontSize = "0.7rem";
+        stateLabel.style.fontFamily = "'JetBrains Mono', monospace";
+        stateLabel.style.color = "var(--text-secondary)";
+        stateLabel.textContent = m.status.toUpperCase();
+
+        row.append(btn, tag, titleInput, subInput, stateLabel);
+        container.appendChild(row);
+      });
+    }
+
+    function updateAll() {
+      renderMilestoneControls();
+      renderLockScreen(lockCtx);
+      renderCoverShowcase();
+    }
+
+    function downloadCanvas(canvas, filename) {
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    ["modeOsBtn", "modeCleanBtn", "modeWireBtn"].forEach((id) => {
+      document.getElementById(id).addEventListener("click", () => {
+        ["modeOsBtn", "modeCleanBtn", "modeWireBtn"].forEach(b => document.getElementById(b).classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+        state.previewMode = id === "modeOsBtn" ? "os" : id === "modeCleanBtn" ? "clean" : "wireframe";
+        renderLockScreen(lockCtx);
+      });
+    });
+
+    document.querySelectorAll(".preset-chip").forEach(chip => {
+      chip.addEventListener("click", () => loadPreset(chip.dataset.preset));
+    });
+
+    document.getElementById("goalTitleInput").addEventListener("input", (e) => {
+      state.deadlineTitle = e.target.value || "DEADLINE SPRINT";
+      renderLockScreen(lockCtx);
+      renderCoverShowcase();
+    });
+
+    document.getElementById("targetDateInput").addEventListener("change", (e) => {
+      if (e.target.value) {
+        state.targetDateISO = e.target.value;
+        recalculateBackwardDates();
+        updateAll();
+      }
+    });
+
+    document.getElementById("themeSelect").addEventListener("change", (e) => {
+      state.customTheme = null;
+      state.themeKey = e.target.value;
+      updateAll();
+    });
+
+    document.getElementById("refImageInput").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        const sample = document.createElement("canvas");
+        sample.width = 16; sample.height = 16;
+        const sctx = sample.getContext("2d");
+        sctx.drawImage(img, 0, 0, 16, 16);
+        const data = sctx.getImageData(4, 4, 1, 1).data;
+        const hex = "#" + [data[0], data[1], data[2]].map(v => Math.max(100, v).toString(16).padStart(2, "0")).join("");
+        state.customTheme = { ...THEMES.obsidian, primary: hex, launch: hex };
+        updateAll();
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+    document.getElementById("downloadCoverBtn").addEventListener("click", () => {
+      renderCoverShowcase();
+      downloadCanvas(coverCanvas, "handshake-cover-3x2-1800x1200.png");
+    });
+
+    document.getElementById("downloadPhoneBtn").addEventListener("click", () => {
+      const temp = document.createElement("canvas");
+      temp.width = 1080; temp.height = 2340;
+      renderLockScreen(temp.getContext("2d"), { mode: "clean" });
+      downloadCanvas(temp, "countdown-lockscreen-phone-1080x2340.png");
+    });
+
+    document.getElementById("downloadDesktopBtn").addEventListener("click", () => {
+      const temp = document.createElement("canvas");
+      temp.width = 2560; temp.height = 1600;
+      const dctx = temp.getContext("2d");
+      const theme = getActiveTheme();
+      const bg = dctx.createLinearGradient(0, 0, 2560, 1600);
+      bg.addColorStop(0, theme.bgTop); bg.addColorStop(1, theme.bgMid);
+      dctx.fillStyle = bg; dctx.fillRect(0, 0, 2560, 1600);
+
+      const phone = document.createElement("canvas");
+      phone.width = 1080; phone.height = 2340;
+      renderLockScreen(phone.getContext("2d"), { mode: "clean" });
+      dctx.drawImage(phone, 1680, 110, 640, 1386);
+
+      dctx.fillStyle = "#FAFAFA";
+      dctx.font = "700 72px 'Inter', sans-serif";
+      dctx.fillText(state.deadlineTitle, 140, 320);
+      dctx.fillStyle = "#8E8E93";
+      dctx.font = "600 32px 'JetBrains Mono', monospace";
+      dctx.fillText("OBSIDIAN DESKTOP HUD • TOP-LEFT CLOCK SAFE ZONE", 140, 390);
+      downloadCanvas(temp, "countdown-lockscreen-desktop-2560x1600.png");
+    });
+
+    document.getElementById("exportIcsBtn").addEventListener("click", () => {
+      let ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Obsidian Countdown HUD//EN"];
+      state.milestones.forEach((m) => {
+        ics.push(
+          "BEGIN:VEVENT",
+          `DTSTART:${m.isoDate}T090000`,
+          `DTEND:${m.isoDate}T093000`,
+          `SUMMARY:[Sprint HUD] ${m.delta}: ${m.title}`,
+          `DESCRIPTION:${m.sub} - Goal: ${state.deadlineTitle}`,
+          "END:VEVENT"
+        );
+      });
+      ics.push("END:VCALENDAR");
+      const blob = new Blob([ics.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "sprint-reminders.ics";
+      a.click();
+    });
+
+    loadPreset("devtool");
+    document.fonts.ready.then(updateAll);
+  </script>
+</body>
+</html>

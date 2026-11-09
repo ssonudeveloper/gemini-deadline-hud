@@ -1,7 +1,7 @@
 # 🚀 Zero to v1.0: 14-Day AI Product Launch HUD
 ### Handshake AI Skills Studio × Google Gemini Challenge Submission
 
-🔗 **[Launch Interactive Lock Screen Studio & Live Demo](https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPO-NAME/)**
+🔗 **[Launch Interactive Lock Screen Studio & Live Demo](https://github.com/ssonudeveloper/gemini-deadline-hud/)**
 
 ![Countdown Lock Screen Showcase](./handshake-cover-3x2-1800x1200.png)
 
